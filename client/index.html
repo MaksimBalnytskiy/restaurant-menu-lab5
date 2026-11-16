@@ -17,25 +17,51 @@
         input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; background: #2a2a2a; color: #fff; border: 1px solid #444; border-radius: 4px; box-sizing: border-box; }
         button { background: #f39c12; color: #121212; font-weight: bold; border: none; padding: 12px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 1.05em; }
         button:hover { background: #e67e22; }
-        .form-card, .ai-card { background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #444; }
-        .ai-card { border-color: #2980b9; }
-        .ai-response { margin-top: 15px; padding: 14px; background: #222b35; border-left: 4px solid #3498db; border-radius: 4px; color: #ecf0f1; line-height: 1.5; display: none; }
+        .form-card { background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #444; }
+
+        /* Стилі для плаваючого чат-бота у лівому нижньому куті */
+        .ai-floating-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 320px;
+            background: #1a1a1a;
+            border: 1px solid #2980b9;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+            z-index: 1000;
+        }
+        .ai-response {
+            margin-top: 10px;
+            padding: 10px;
+            background: #222b35;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+            color: #ecf0f1;
+            font-size: 0.9em;
+            line-height: 1.4;
+            display: none;
+            max-height: 150px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
-    <h1>🍽️ Ресторан 🍽️</h1>
-    <p style="text-align: center;">Меню та інтелектуальний підбір страв</p>
+    <h1>🍽️ Ресторан "Смаколик" 🍽️</h1>
+    <p style="text-align: center;">Меню та онлайн-замовлення</p>
 
-    <div class="ai-card">
-        <h3 style="color: #3498db; margin-top: 0;">🤖 ШІ-Офіціант (Google Gemini AI)</h3>
+    <!-- Плаваючий блок ШІ-Офіціанта у лівому нижньому куті -->
+    <div class="ai-floating-container">
+        <h4 style="color: #3498db; margin-top: 0; margin-bottom: 10px;">🤖 ШІ-Офіціант (Gemini)</h4>
         <form id="aiForm">
-            <input type="text" id="aiInput" placeholder="Опишіть ваші побажання (наприклад: щось легке або до 200 грн)..." required>
-            <button type="submit" id="aiSubmitBtn" style="background: #3498db; color: #fff;">Отримати рекомендацію</button>
+            <input type="text" id="aiInput" placeholder="Порадьте страву..." required style="margin-bottom: 8px; padding: 8px; font-size: 0.9em;">
+            <button type="submit" id="aiSubmitBtn" style="background: #3498db; color: #fff; padding: 8px; font-size: 0.95em;">Запитати</button>
         </form>
         <div id="aiResponseBox" class="ai-response"></div>
     </div>
 
-    <div class="form-card">
+    <div class="form-card" style="max-width: 500px; margin: 0 auto 30px auto;">
         <h3 style="margin-top: 0;">Додати нову страву</h3>
         <form id="dishForm">
             <input type="text" id="titleInput" placeholder="Назва страви..." required>
@@ -46,8 +72,10 @@
         </form>
     </div>
 
-    <h2>Наше Меню</h2>
-    <div id="dishesList">Завантаження...</div>
+    <div style="max-width: 600px; margin: auto;">
+        <h2>Наше Меню</h2>
+        <div id="dishesList">Завантаження...</div>
+    </div>
 
     <script>
         const titleInput = document.getElementById('titleInput');
@@ -81,9 +109,9 @@
             if (!message) return;
 
             aiSubmitBtn.disabled = true;
-            aiSubmitBtn.textContent = 'ШІ аналізує меню...';
+            aiSubmitBtn.textContent = 'Аналізую...';
             aiResponseBox.style.display = 'block';
-            aiResponseBox.textContent = 'Формування персональної поради...';
+            aiResponseBox.textContent = 'Формування поради...';
 
             try {
                 const res = await fetch('/api/ai/recommend', {
@@ -102,7 +130,7 @@
                 aiResponseBox.textContent = 'Помилка з’єднання із сервером.';
             } finally {
                 aiSubmitBtn.disabled = false;
-                aiSubmitBtn.textContent = 'Отримати рекомендацію';
+                aiSubmitBtn.textContent = 'Запитати';
             }
         });
 
