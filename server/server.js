@@ -11,6 +11,16 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, '../client')));
 
+// Логування вхідних запитів для логів Render та лабораторного звіту
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} - Status: ${res.statusCode} (${duration}ms)`);
+  });
+  next();
+});
+
 const DEFAULT_DISH_IMAGE = '/images/placeholder.jpg';
 
 let dishes = [
