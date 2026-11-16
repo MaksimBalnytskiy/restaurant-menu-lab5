@@ -6,12 +6,12 @@ const swaggerJsdoc = require('swagger-jsdoc');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, '../client')));
 
-// Логування вхідних запитів для логів Render та лабораторного звіту
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
@@ -47,8 +47,8 @@ const swaggerOptions = {
     openapi: '3.0.0',
     info: {
       title: 'Restaurant API Documentation',
-      version: '1.2.0',
-      description: 'REST API для меню ресторану (Cloud Ready)',
+      version: '1.3.0',
+      description: 'REST API для меню ресторану з інтеграцією Google AI',
     },
     servers: [{ url: `http://localhost:${PORT}` }],
   },
@@ -131,6 +131,71 @@ app.post('/api/dishes', (req, res) => {
 
   dishes.push(newDish);
   res.status(201).json(newDish);
+});
+
+/**
+ * @openapi
+ * /api/ai/recommend:
+ *   post:
+ *     summary: Отримати рекомендацію страви від ШІ-офіціанта
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - message
+ *             properties:
+ *               message:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Згенерована рекомендація ШІ
+ *       400:
+ *         description: Некоректний запит
+ */
+app.post('/api/ai/recommend', async (req, res) => {
+  const { message } = req.body;
+
+  if (!message || typeof message !== 'string' || message.trim().length < 2) {
+    return res.status(400).json({ error: "Введіть коректний запит для ШІ-помічника." });
+  }
+
+  const menuContext = dishes
+    .map(d => `- ${d.title} (${d.price} грн): ${d.description}`)
+    .join('\n');
+
+  const prompt = `Ти привітний ШІ-офіціант ресторану "Смаколик". Ось актуальне меню закладу:\n${menuContext}\n\nЗапит відвідувача: "${message.trim()}".\nДай коротку, ввічливу та апетитну рекомендацію українською мовою (2-4 речення), спираючись виключно на страви з меню.`;
+
+  if (!GEMINI_API_KEY) {
+    const cheapest = [...dishes].sort((a, b) => a.price - b.price)[0];
+    const fallbackReply = cheapest
+      ? `Рекомендую звернути увагу на "${cheapest.title}" за ${cheapest.price} грн — ${cheapest.description} Це чудовий вибір із нашого меню!`
+      : "Наразі меню порожнє, але ми скоро додамо нові страви!";
+    return res.json({ reply: fallbackReply, source: "fallback" });
+  }
+
+  try {
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const aiResponse = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+
+    if (!aiResponse.ok) {
+      return res.status(502).json({ error: "Помилка звернення до зовнішнього сервісу Google AI." });
+    }
+
+    const data = await aiResponse.json();
+    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Не вдалося сформувати відповідь.";
+    res.json({ reply: reply.trim(), source: "google-gemini" });
+  } catch (error) {
+    res.status(500).json({ error: "Внутрішня помилка сервера під час обробки AI-запиту." });
+  }
 });
 
 app.listen(PORT, () => {

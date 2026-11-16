@@ -2,10 +2,11 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Ресторан</title>
+    <title>Ресторан "Смаколик"</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; padding: 20px; max-width: 800px; margin: auto; }
-        h1, h2 { color: #f39c12; text-align: center; }
+        h1, h2, h3 { color: #f39c12; }
+        h1, h2 { text-align: center; }
         .card { background: #1e1e1e; padding: 0; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; overflow: hidden; display: flex; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
         .dish-image { width: 150px; height: 150px; object-fit: cover; flex-shrink: 0; border-right: 2px solid #333; }
         .dish-content { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
@@ -14,17 +15,28 @@
         .price { color: #27ae60; font-weight: bold; font-size: 1.2em; white-space: nowrap; margin-left: 10px; }
         .dish-desc { margin: 0 0 10px 0; color: #b0b0b0; font-size: 0.95em; line-height: 1.4; }
         input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; background: #2a2a2a; color: #fff; border: 1px solid #444; border-radius: 4px; box-sizing: border-box; }
-        button { background: #f39c12; color: #121212; font-weight: bold; border: none; padding: 12px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 1.1em; }
+        button { background: #f39c12; color: #121212; font-weight: bold; border: none; padding: 12px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 1.05em; }
         button:hover { background: #e67e22; }
-        .form-card { background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #444; }
+        .form-card, .ai-card { background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #444; }
+        .ai-card { border-color: #2980b9; }
+        .ai-response { margin-top: 15px; padding: 14px; background: #222b35; border-left: 4px solid #3498db; border-radius: 4px; color: #ecf0f1; line-height: 1.5; display: none; }
     </style>
 </head>
 <body>
     <h1>🍽️ Ресторан 🍽️</h1>
-    <p style="text-align: center;">Меню та онлайн-замовлення</p>
+    <p style="text-align: center;">Меню та інтелектуальний підбір страв</p>
+
+    <div class="ai-card">
+        <h3 style="color: #3498db; margin-top: 0;">🤖 ШІ-Офіціант (Google Gemini AI)</h3>
+        <form id="aiForm">
+            <input type="text" id="aiInput" placeholder="Опишіть ваші побажання (наприклад: щось легке або до 200 грн)..." required>
+            <button type="submit" id="aiSubmitBtn" style="background: #3498db; color: #fff;">Отримати рекомендацію</button>
+        </form>
+        <div id="aiResponseBox" class="ai-response"></div>
+    </div>
 
     <div class="form-card">
-        <h3>Додати нову страву</h3>
+        <h3 style="margin-top: 0;">Додати нову страву</h3>
         <form id="dishForm">
             <input type="text" id="titleInput" placeholder="Назва страви..." required>
             <textarea id="descInput" placeholder="Опис та склад..." required></textarea>
@@ -45,6 +57,11 @@
         const dishForm = document.getElementById('dishForm');
         const dishesList = document.getElementById('dishesList');
 
+        const aiForm = document.getElementById('aiForm');
+        const aiInput = document.getElementById('aiInput');
+        const aiSubmitBtn = document.getElementById('aiSubmitBtn');
+        const aiResponseBox = document.getElementById('aiResponseBox');
+
         window.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('draft_title')) titleInput.value = localStorage.getItem('draft_title');
             if (localStorage.getItem('draft_desc')) descInput.value = localStorage.getItem('draft_desc');
@@ -58,11 +75,42 @@
         priceInput.addEventListener('input', (e) => localStorage.setItem('draft_price', e.target.value));
         imageInput.addEventListener('input', (e) => localStorage.setItem('draft_image', e.target.value));
 
+        aiForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = aiInput.value.trim();
+            if (!message) return;
+
+            aiSubmitBtn.disabled = true;
+            aiSubmitBtn.textContent = 'ШІ аналізує меню...';
+            aiResponseBox.style.display = 'block';
+            aiResponseBox.textContent = 'Формування персональної поради...';
+
+            try {
+                const res = await fetch('/api/ai/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    aiResponseBox.textContent = data.reply;
+                } else {
+                    aiResponseBox.textContent = 'Помилка: ' + (data.error || 'Не вдалося отримати відповідь');
+                }
+            } catch (err) {
+                aiResponseBox.textContent = 'Помилка з’єднання із сервером.';
+            } finally {
+                aiSubmitBtn.disabled = false;
+                aiSubmitBtn.textContent = 'Отримати рекомендацію';
+            }
+        });
+
         async function fetchDishes() {
             try {
                 const res = await fetch('/api/dishes');
                 const dishes = await res.json();
-                
+
                 if (dishes.length === 0) {
                     dishesList.innerHTML = '<p style="text-align:center;">Меню порожнє.</p>';
                     return;
@@ -83,7 +131,6 @@
                     </div>
                 `).join('');
             } catch (err) {
-                console.error(err);
                 dishesList.innerHTML = '<p style="color:red; text-align:center;">Помилка сервера.</p>';
             }
         }
