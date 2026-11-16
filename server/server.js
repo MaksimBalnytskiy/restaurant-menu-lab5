@@ -12,6 +12,7 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, '../client')));
 
+// Логування вхідних запитів
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
@@ -162,40 +163,48 @@ app.post('/api/ai/recommend', async (req, res) => {
     return res.status(400).json({ error: "Введіть коректний запит для ШІ-помічника." });
   }
 
-  const menuContext = dishes
-    .map(d => `- ${d.title} (${d.price} грн): ${d.description}`)
-    .join('\n');
+  // Розумна резервна евристика на випадок будь-яких проблем з мережею чи ключем
+  const lowerMsg = message.toLowerCase();
+  let matchedDish = dishes[0];
 
-  const prompt = `Ти привітний ШІ-офіціант ресторану "Смаколик". Ось актуальне меню закладу:\n${menuContext}\n\nЗапит відвідувача: "${message.trim()}".\nДай коротку, ввічливу та апетитну рекомендацію українською мовою (2-4 речення), спираючись виключно на страви з меню.`;
+  if (lowerMsg.includes('салат') || lowerMsg.includes('легк')) {
+    matchedDish = dishes.find(d => d.title.toLowerCase().includes('салат')) || dishes[1];
+  } else if (lowerMsg.includes('піц') || lowerMsg.includes('італ')) {
+    matchedDish = dishes.find(d => d.title.toLowerCase().includes('піца')) || dishes[0];
+  } else {
+    matchedDish = dishes[Math.floor(Math.random() * dishes.length)];
+  }
+
+  const smartReply = `Рекомендую скуштувати "${matchedDish.title}" за ${matchedDish.price} грн. ${matchedDish.description} Це ідеальний вибір із нашого меню!`;
 
   if (!GEMINI_API_KEY) {
-    const cheapest = [...dishes].sort((a, b) => a.price - b.price)[0];
-    const fallbackReply = cheapest
-      ? `Рекомендую звернути увагу на "${cheapest.title}" за ${cheapest.price} грн — ${cheapest.description} Це чудовий вибір із нашого меню!`
-      : "Наразі меню порожнє, але ми скоро додамо нові страви!";
-    return res.json({ reply: fallbackReply, source: "fallback" });
+    return res.json({ reply: smartReply, source: "smart-fallback" });
   }
 
   try {
-    // Використовуємо стабільну та перевірену модель gemini-1.5-flash
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
     const aiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
+        contents: [{ parts: [{ text: `Ти привітний офіціант ресторану "Смаколик". Актуальне меню: ${JSON.stringify(dishes)}. Побажання відвідувача: "${message}". Дай коротку, ввічливу пораду українською мовою.` }] }]
       })
     });
 
     if (!aiResponse.ok) {
-      return res.status(502).json({ error: "Помилка звернення до зовнішнього сервісу Google AI." });
+      return res.json({ reply: smartReply, source: "fallback-on-error" });
     }
 
     const data = await aiResponse.json();
-    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Не вдалося сформувати відповідь.";
+    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!reply) {
+      return res.json({ reply: smartReply, source: "fallback-empty" });
+    }
+
     res.json({ reply: reply.trim(), source: "google-gemini" });
   } catch (error) {
-    res.status(500).json({ error: "Внутрішня помилка сервера під час обробки AI-запиту." });
+    res.json({ reply: smartReply, source: "fallback-exception" });
   }
 });
 
