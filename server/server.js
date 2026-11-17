@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, '../client')));
 
-// Логування вхідних запитів
+// Логування вхідних запитів (для лабораторної та логів Render)
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
@@ -25,22 +25,11 @@ app.use((req, res, next) => {
 const DEFAULT_DISH_IMAGE = '/images/placeholder.jpg';
 
 let dishes = [
-  {
-    id: "1",
-    title: "Піца Маргарита",
-    description: "Класична італійська піца з томатним соусом, моцарелою та свіжим базиліком.",
-    price: 220,
-    imageUrl: "/images/pizza.jpg",
-    createdAt: new Date()
-  },
-  {
-    id: "2",
-    title: "Салат Цезар",
-    description: "Свіжий айсберг, курка гриль, соус цезар, сухарики та пармезан.",
-    price: 195,
-    imageUrl: "/images/caesar.jpg",
-    createdAt: new Date()
-  }
+  { id: "1", title: "Піца Маргарита", description: "Класична італійська піца з томатним соусом, моцарелою та свіжим базиліком.", price: 220, imageUrl: "/images/pizza.jpg", createdAt: new Date() },
+  { id: "2", title: "Салат Цезар", description: "Свіжий айсберг, курка гриль, соус цезар, сухарики та пармезан.", price: 195, imageUrl: "/images/caesar.jpg", createdAt: new Date() },
+  { id: "3", title: "Стейк з лосося", description: "Ніжний лосось на грилі з лимонним соусом та травами.", price: 420, imageUrl: "/images/placeholder.jpg", createdAt: new Date() },
+  { id: "4", title: "Суп Том Ям", description: "Традиційний гострий тайський суп з креветками та кокосовим молоком.", price: 260, imageUrl: "/images/placeholder.jpg", createdAt: new Date() },
+  { id: "5", title: "Бургер 'Black Angus'", description: "Соковита яловича котлета, сир чедер, бекон, соус барбекю.", price: 280, imageUrl: "/images/placeholder.jpg", createdAt: new Date() }
 ];
 
 const swaggerOptions = {
@@ -163,13 +152,17 @@ app.post('/api/ai/recommend', async (req, res) => {
     return res.status(400).json({ error: "Введіть коректний запит для ШІ-помічника." });
   }
 
-  // Розумна резервна евристика на випадок будь-яких проблем з мережею чи ключем
+  // Розумна резервна евристика для точного підбору страви за ключовими словами
   const lowerMsg = message.toLowerCase();
   let matchedDish = dishes[0];
 
-  if (lowerMsg.includes('салат') || lowerMsg.includes('легк')) {
+  if (lowerMsg.includes('лосось') || lowerMsg.includes('риба') || lowerMsg.includes('стейк')) {
+    matchedDish = dishes.find(d => d.title.toLowerCase().includes('лосось') || d.title.toLowerCase().includes('стейк')) || dishes[2];
+  } else if (lowerMsg.includes('салат') || lowerMsg.includes('легк')) {
     matchedDish = dishes.find(d => d.title.toLowerCase().includes('салат')) || dishes[1];
-  } else if (lowerMsg.includes('піц') || lowerMsg.includes('італ')) {
+  } else if (lowerMsg.includes('суп') || lowerMsg.includes('том ям')) {
+    matchedDish = dishes.find(d => d.title.toLowerCase().includes('суп') || d.title.toLowerCase().includes('том ям')) || dishes[3];
+  } else if (lowerMsg.includes('піц')) {
     matchedDish = dishes.find(d => d.title.toLowerCase().includes('піца')) || dishes[0];
   } else {
     matchedDish = dishes[Math.floor(Math.random() * dishes.length)];
@@ -187,7 +180,7 @@ app.post('/api/ai/recommend', async (req, res) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `Ти привітний офіціант ресторану "Смаколик". Актуальне меню: ${JSON.stringify(dishes)}. Побажання відвідувача: "${message}". Дай коротку, ввічливу пораду українською мовою.` }] }]
+        contents: [{ parts: [{ text: `Ти привітний офіціант ресторану "Смаколик". Актуальне меню: ${JSON.stringify(dishes)}. Побажання відвідувача: "${message}". Дай коротку ввічливу пораду українською мовою.` }] }]
       })
     });
 
