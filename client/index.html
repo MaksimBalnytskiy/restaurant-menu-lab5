@@ -8,7 +8,6 @@
         h1, h2, h3 { color: #f39c12; }
         h1, h2 { text-align: center; }
         
-        /* Сітка для меню */
         .dishes-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -25,11 +24,8 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.4); 
             transition: transform 0.2s;
         }
-        .card:hover {
-            transform: translateY(-4px);
-            border-color: #f39c12;
-        }
-        .dish-image { width: 100%; height: 180px; object-fit: cover; border-bottom: 2px solid #333; }
+        .card:hover { transform: translateY(-4px); border-color: #f39c12; }
+        .dish-image { width: 100%; height: 180px; object-fit: cover; border-bottom: 2px solid #333; background: #2a2a2a; }
         .dish-content { padding: 15px; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; }
         .dish-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; }
         .dish-title { margin: 0; font-size: 1.2em; color: #fff; }
@@ -70,7 +66,7 @@
     </style>
 </head>
 <body>
-    <h1>🍽️ Ресторан "Смаколик" 🍽️</h1>
+    <h1>🍽️ Ресторан "Смаколик"</h1>
     <p style="text-align: center;">Авторське меню та інтелектуальний підбір страв</p>
 
     <!-- Плаваючий блок ШІ-Офіціанта у лівому нижньому куті -->
@@ -111,26 +107,26 @@
         const aiResponseBox = document.getElementById('aiResponseBox');
 
         const initialDishes = [
-            { id: "1", title: "Піца Маргарита", description: "Класична італійська піца з томатним соусом, моцарелою та свіжим базиліком.", price: 220, imageUrl: "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=400" },
-            { id: "2", title: "Салат Цезар", description: "Свіжий айсберг, курка гриль, соус цезар, сухарики та пармезан.", price: 195, imageUrl: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400" },
-            { id: "3", title: "Стейк з лосося", description: "Ніжний лосось на грилі з лимонним соусом та травами.", price: 420, imageUrl: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400" },
-            { id: "4", title: "Суп Том Ям", description: "Традиційний гострий тайський суп з креветками та кокосовим молоком.", price: 260, imageUrl: "https://images.unsplash.com/photo-1548943487-a2e4e43b4853?w=400" },
-            { id: "5", title: "Бургер 'Black Angus'", description: "Соковита яловича котлета, сир чедер, бекон, соус барбекю.", price: 280, imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400" },
-            { id: "6", title: "Паста Карбонара", description: "Спагеті з беконом, яєчним жовтком, пармезаном та чорним перцем.", price: 210, imageUrl: "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400" },
-            { id: "7", title: "Грецький салат", description: "Свіжі овочі, сир фета, оливкова олія та орегано.", price: 170, imageUrl: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400" },
-            { id: "8", title: "Курячий бульйон", description: "Домашній бульйон з лапшею та зеленню.", price: 130, imageUrl: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400" },
-            { id: "9", title: "Рол 'Філадельфія'", description: "Лосось, крем-сир, авокадо, рис, норі.", price: 340, imageUrl: "https://images.unsplash.com/photo-1611143669185-af224c5e3252?w=400" },
-            { id: "10", title: "Рол 'Каліфорнія'", description: "Краб-суримі, авокадо, огірок, ікра масаго.", price: 290, imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400" },
-            { id: "11", title: "Телячі медальйони", description: "Ніжне м'ясо телятини під ягідним соусом.", price: 390, imageUrl: "https://images.unsplash.com/photo-1558030006-450675393462?w=400" },
-            { id: "12", title: "Орзо з морепродуктами", description: "Макарони орзо з креветками у білому вині.", price: 350, imageUrl: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400" },
-            { id: "13", title: "Сирна тарілка", description: "Асорті елітних сирів з медом та горіхами.", price: 320, imageUrl: "https://images.unsplash.com/photo-1631379578550-7038263db699?w=400" },
-            { id: "14", title: "М’ясне асорті", description: "Ковбаски власгного виробництва, буженина, хамон.", price: 380, imageUrl: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
-            { id: "15", title: "Млинці з лососем", description: "Тонкі млинці з вершковим сиром та лососем.", price: 180, imageUrl: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400" },
-            { id: "16", title: "Десерт 'Тірамісу'", description: "Італійське печиво савоярді, сир маскарпоне та кава.", price: 160, imageUrl: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400" },
-            { id: "17", title: "Чізкейк Нью-Йорк", description: "Класичний ніжний сирний десерт.", price: 150, imageUrl: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400" },
-            { id: "18", title: "Лимонад цитрусовий", description: "Освіжаючий авторський напій з апельсином та м'ятою.", price: 90, imageUrl: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400" },
-            { id: "19", title: "Фреш апельсиновий", description: "Свіжовижатий сік 100%.", price: 120, imageUrl: "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400" },
-            { id: "20", title: "Кава Капучино", description: "Еспресо з пишною молочною пінкою.", price: 75, imageUrl: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400" }
+            { id: "1", title: "Піца Маргарита", description: "Класична італійська піца з томатним соусом, моцарелою та свіжим базиліком.", price: 220, imageUrl: "/images/pizza.jpg" },
+            { id: "2", title: "Салат Цезар", description: "Свіжий айсберг, курка гриль, соус цезар, сухарики та пармезан.", price: 195, imageUrl: "/images/caesar.jpg" },
+            { id: "3", title: "Стейк з лосося", description: "Ніжний лосось на грилі з лимонним соусом та травами.", price: 420, imageUrl: "/images/placeholder.jpg" },
+            { id: "4", title: "Суп Том Ям", description: "Традиційний гострий тайський суп з креветками та кокосовим молоком.", price: 260, imageUrl: "/images/placeholder.jpg" },
+            { id: "5", title: "Бургер 'Black Angus'", description: "Соковита яловича котлета, сир чедер, бекон, соус барбекю.", price: 280, imageUrl: "/images/placeholder.jpg" },
+            { id: "6", title: "Паста Карбонара", description: "Спагеті з гуанчале, яєчним жовтком, сиром пекорино романо та чорним перцем.", price: 210, imageUrl: "/images/placeholder.jpg" },
+            { id: "7", title: "Грецький салат", description: "Свіжі овочі, сир фета, оливкова олія та орегано.", price: 170, imageUrl: "/images/placeholder.jpg" },
+            { id: "8", title: "Курячий бульйон", description: "Домашній бульйон з лапшею, перепелиним яєчком та зеленню.", price: 130, imageUrl: "/images/placeholder.jpg" },
+            { id: "9", title: "Рол 'Філадельфія'", description: "Лосось, крем-сир, авокадо, рис, норі.", price: 340, imageUrl: "/images/placeholder.jpg" },
+            { id: "10", title: "Рол 'Каліфорнія'", description: "Краб-суримі, авокадо, огірок, ікра масаго.", price: 290, imageUrl: "/images/placeholder.jpg" },
+            { id: "11", title: "Телячі медальйони", description: "Ніжне м'ясо телятини під ягідним соусом.", price: 390, imageUrl: "/images/placeholder.jpg" },
+            { id: "12", title: "Орзо з морепродуктами", description: "Макарони орзо з креветками, мідіями у білому вині.", price: 350, imageUrl: "/images/placeholder.jpg" },
+            { id: "13", title: "Сирна тарілка", description: "Асорті елітних сирів з медом та горіхами.", price: 320, imageUrl: "/images/placeholder.jpg" },
+            { id: "14", title: "М’ясне асорті", description: "Ковбаски власного виробництва, буженина, хамон.", price: 380, imageUrl: "/images/placeholder.jpg" },
+            { id: "15", title: "Млинці з лососем", description: "Тонкі млинці з вершковим сиром та слабосолоним лососем.", price: 180, imageUrl: "/images/placeholder.jpg" },
+            { id: "16", title: "Десерт 'Тірамісу'", description: "Італійське печиво савоярді, сир маскарпоне та кава.", price: 160, imageUrl: "/images/placeholder.jpg" },
+            { id: "17", title: "Чізкейк Нью-Йорк", description: "Класичний ніжний сирний десерт на пісочній основі.", price: 150, imageUrl: "/images/placeholder.jpg" },
+            { id: "18", title: "Лимонад цитрусовий", description: "Освіжаючий авторський напій з апельсином та м'ятою.", price: 90, imageUrl: "/images/placeholder.jpg" },
+            { id: "19", title: "Фреш апельсиновий", description: "Свіжовижатий сік 100%.", price: 120, imageUrl: "/images/placeholder.jpg" },
+            { id: "20", title: "Кава Капучино", description: "Еспресо з пишною молочною пінкою.", price: 75, imageUrl: "/images/placeholder.jpg" }
         ];
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -182,14 +178,13 @@
                 const res = await fetch('/api/dishes');
                 let dishes = await res.json();
 
-                // Якщо на сервері менше страв (або він тільки запустився), об'єднуємо з дефолтними для красивої демонстрації сітки
                 if (dishes.length <= 2) {
                     dishes = initialDishes;
                 }
 
                 dishesList.innerHTML = dishes.map(dish => `
                     <div class="card">
-                        <img src="${dish.imageUrl || '/images/placeholder.jpg'}" alt="${dish.title}" class="dish-image">
+                        <img src="${dish.imageUrl || '/images/placeholder.jpg'}" alt="${dish.title}" class="dish-image" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'">
                         <div class="dish-content">
                             <div>
                                 <div class="dish-header">
